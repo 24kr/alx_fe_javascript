@@ -1,5 +1,27 @@
 let quotes = [];
 
+// Mock server setup
+const mockServer = {
+    quotes: [],  // This will simulate the database
+
+    fetchQuotes() {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve(this.quotes);
+            }, 500);
+        });
+    },
+
+    saveQuotes(newQuotes) {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                this.quotes = newQuotes;
+                resolve(this.quotes);
+            }, 500);
+        });
+    }
+};
+
 // Function to display a random quote
 function showRandomQuote() {
     const randomIndex = Math.floor(Math.random() * quotes.length);
@@ -51,20 +73,31 @@ function addQuote() {
     }
 }
 
-// Function to save quotes to local storage
+// Function to save quotes to local storage and sync with server
 function saveQuotes() {
     localStorage.setItem('quotes', JSON.stringify(quotes));
-    populateCategories(); // Update category dropdown when saving quotes
+    populateCategories();
+    syncWithServer();  // Sync with the server
 }
 
-// Function to load quotes from local storage
-function loadQuotes() {
-    const storedQuotes = localStorage.getItem('quotes');
-    if (storedQuotes) {
-        quotes = JSON.parse(storedQuotes);
+// Function to load quotes from local storage and sync with the server
+async function loadQuotes() {
+    try {
+        const serverQuotes = await mockServer.fetchQuotes();
+        const localQuotes = getLocalQuotes();
+
+        // Check if server data is more recent
+        if (serverQuotes.length > localQuotes.length) {
+            quotes = serverQuotes;
+        } else {
+            quotes = localQuotes;
+        }
+
+        showRandomQuote();
+        populateCategories();
+    } catch (error) {
+        console.error('Failed to load quotes:', error);
     }
-    showRandomQuote();
-    populateCategories(); // Populate categories on load
 }
 
 // Function to import quotes from a JSON string
@@ -137,42 +170,3 @@ function displayQuotes(filteredQuotes) {
         quoteCategory.textContent = `– ${quote.category}`;
 
         quoteDisplay.appendChild(quoteText);
-        quoteDisplay.appendChild(quoteCategory);
-    });
-}
-
-// Function to populate categories in the dropdown
-function populateCategories() {
-    const categories = [...new Set(quotes.map(quote => quote.category))];
-    const categoryFilter = document.getElementById('categoryFilter');
-    categoryFilter.innerHTML = '<option value="all">All Categories</option>';
-
-    categories.forEach(category => {
-        const option = document.createElement('option');
-        option.value = category;
-        option.textContent = category;
-        categoryFilter.appendChild(option);
-    });
-
-    const lastSelectedCategory = sessionStorage.getItem('lastSelectedCategory');
-    if (lastSelectedCategory) {
-        categoryFilter.value = lastSelectedCategory;
-    }
-
-    filterQuotes();
-}
-
-// Event listener for category filter change
-document.getElementById('categoryFilter').addEventListener('change', function () {
-    sessionStorage.setItem('lastSelectedCategory', this.value);
-    filterQuotes();
-});
-
-// Initial setup
-loadQuotes();
-createAddQuoteForm();
-populateCategories(); // Populate categories on initial load
-
-// Event listener for the button to show a new random quote
-const newQuoteButton = document.getElementById('newQuote');
-newQuoteButton.addEventListener('click', showRandomQuote);
