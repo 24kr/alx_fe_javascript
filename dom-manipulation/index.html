@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,11 +18,11 @@
             margin: 0;
             padding: 20px;
         }
-    
+
         h1 {
             color: #4a90e2;
         }
-    
+
         #quoteDisplay {
             border: 2px solid #ddd;
             border-radius: 10px;
@@ -32,7 +33,7 @@
             background-color: #fff;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-    
+
         #newQuoteForm {
             display: flex;
             flex-direction: column;
@@ -40,7 +41,7 @@
             gap: 10px;
             margin: 20px;
         }
-    
+
         #newQuoteText,
         #newQuoteCategory {
             width: 100%;
@@ -49,38 +50,50 @@
             border-radius: 5px;
             outline: none;
         }
-    
+
         #newQuoteText:focus,
         #newQuoteCategory:focus {
             border-color: #4a90e2;
         }
-    
+
         button {
-            justify-content: center;
-            display: flex;
-            margin-top: 1em;
-            margin-bottom: 1em;
-            padding: 1em 2em 1em 2em;
+            padding: 10px 20px;
             border: none;
             border-radius: 5px;
             background-color: #4a90e2;
             color: #fff;
             cursor: pointer;
-            font-weight: 700;
-            align-items: center;
             transition: background-color 0.3s;
         }
-    
+
         button:hover {
             background-color: #357ab8;
         }
+
+        .action-buttons {
+            margin-top: 20px;
+        }
+
+        .action-buttons button {
+            margin: 5px;
+        }
+
+        .file-input {
+            margin-top: 20px;
+        }
     </style>
 </head>
+
 <body>
     <h1>Dynamic Quote Generator</h1>
     <div id="quoteDisplay"></div>
     <button id="newQuote">Show New Quote</button>
-    
+    <div id="newQuoteForm"></div>
+    <div class="action-buttons">
+        <button id="importButton">Import Quotes</button>
+        <button id="exportButton">Export Quotes</button>
+        <input type="file" id="importFile" accept=".json" class="file-input" />
+    </div>
     <script src="script.js"></script>
 </body>
 
