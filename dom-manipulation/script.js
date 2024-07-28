@@ -232,6 +232,7 @@ async function syncQuotes() {
 
         quotes = uniqueQuotes;
         localStorage.setItem('quotes', JSON.stringify(quotes));
+        notifyUser('Quotes synced with server!');
         console.log('Data synced successfully');
     } catch (error) {
         console.error('Sync failed:', error);
@@ -263,9 +264,37 @@ function resolveConflicts(localQuotes, serverQuotes) {
 }
 
 // Function to notify users about conflicts
-function notifyConflictResolution() {
-    alert('Conflicts have been resolved. Please review the data.');
+function notifyUser(message) {
+    const notificationArea = document.getElementById('notificationArea');
+    notificationArea.innerHTML = `<p>${message}</p>`;
 }
 
 // Function to handle data conflicts
-async function h
+async function handleConflicts() {
+    const localQuotes = getLocalQuotes();
+    const serverQuotes = await fetchQuotesFromServer();
+    const resolvedQuotes = resolveConflicts(localQuotes, serverQuotes);
+    quotes = resolvedQuotes;
+    saveQuotes();
+    notifyUser('Conflicts have been resolved. Please review the data.');
+}
+
+// Initialize the application
+document.addEventListener('DOMContentLoaded', async () => {
+    createAddQuoteForm();
+    await loadQuotes();
+    const lastViewedQuote = sessionStorage.getItem('lastViewedQuote');
+    if (lastViewedQuote) {
+        const quote = JSON.parse(lastViewedQuote);
+        const quoteDisplay = document.getElementById('quoteDisplay');
+        quoteDisplay.innerHTML = `<p>${quote.text}</p><em>– ${quote.category}</em>`;
+    }
+    startPeriodicSync();
+});
+
+// Add event listeners for buttons
+document.getElementById('importButton').addEventListener('click', () => {
+    document.getElementById('importFile').click();
+});
+
+document.getElementById('importFile').addEventListener('
