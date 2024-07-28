@@ -2,7 +2,7 @@ let quotes = [];
 
 // Mock server setup
 const mockServer = {
-    quotes: [],  // This will simulate the database
+    quotes: [],
 
     fetchQuotes() {
         return new Promise((resolve) => {
@@ -22,16 +22,44 @@ const mockServer = {
     }
 };
 
+// Fetch quotes from the server
+async function fetchQuotesFromServer() {
+    try {
+        const response = await fetch('https://jsonplaceholder.typicode.com/posts');
+        const data = await response.json();
+        return data.map(post => ({ text: post.title, category: 'general' }));
+    } catch (error) {
+        console.error('Failed to fetch quotes:', error);
+        return [];
+    }
+}
+
+// Post a new quote to the server
+async function postQuoteToServer(quote) {
+    try {
+        const response = await fetch('https://jsonplaceholder.typicode.com/posts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ title: quote.text, body: quote.category })
+        });
+        const data = await response.json();
+        return { ...quote, id: data.id };
+    } catch (error) {
+        console.error('Failed to post quote:', error);
+        return null;
+    }
+}
+
 // Function to display a random quote
 function showRandomQuote() {
     const randomIndex = Math.floor(Math.random() * quotes.length);
     const quote = quotes[randomIndex];
     const quoteDisplay = document.getElementById('quoteDisplay');
 
-    // Clear the current quote
     quoteDisplay.innerHTML = '';
 
-    // Create and append new quote elements
     const quoteText = document.createElement('p');
     quoteText.textContent = quote.text;
     const quoteCategory = document.createElement('em');
@@ -40,7 +68,6 @@ function showRandomQuote() {
     quoteDisplay.appendChild(quoteText);
     quoteDisplay.appendChild(quoteCategory);
 
-    // Save the last viewed quote to session storage
     sessionStorage.setItem('lastViewedQuote', JSON.stringify(quote));
 }
 
@@ -66,8 +93,8 @@ function addQuote() {
         document.getElementById('newQuoteText').value = '';
         document.getElementById('newQuoteCategory').value = '';
         saveQuotes();
-        showRandomQuote(); // Display the new quote immediately
-        populateCategories(); // Update category filter dropdown
+        showRandomQuote();
+        populateCategories();
     } else {
         alert('Please fill in both the quote and category.');
     }
@@ -77,16 +104,15 @@ function addQuote() {
 function saveQuotes() {
     localStorage.setItem('quotes', JSON.stringify(quotes));
     populateCategories();
-    syncWithServer();  // Sync with the server
+    syncWithServer();
 }
 
 // Function to load quotes from local storage and sync with the server
 async function loadQuotes() {
     try {
-        const serverQuotes = await mockServer.fetchQuotes();
+        const serverQuotes = await fetchQuotesFromServer();
         const localQuotes = getLocalQuotes();
 
-        // Check if server data is more recent
         if (serverQuotes.length > localQuotes.length) {
             quotes = serverQuotes;
         } else {
@@ -109,7 +135,7 @@ function importQuotes(jsonString) {
             saveQuotes();
             showRandomQuote();
             alert('Quotes imported successfully!');
-            populateCategories(); // Update category filter dropdown
+            populateCategories();
         } else {
             alert('Invalid JSON format. Please provide a valid JSON array.');
         }
@@ -141,7 +167,7 @@ function importFromJsonFile(event) {
         saveQuotes();
         showRandomQuote();
         alert('Quotes imported successfully!');
-        populateCategories(); // Update category filter dropdown
+        populateCategories();
     };
     fileReader.readAsText(event.target.files[0]);
 }
@@ -158,15 +184,4 @@ function filterQuotes() {
     displayQuotes(filteredQuotes);
 }
 
-// Function to display quotes
-function displayQuotes(filteredQuotes) {
-    const quoteDisplay = document.getElementById('quoteDisplay');
-    quoteDisplay.innerHTML = '';
-
-    filteredQuotes.forEach(quote => {
-        const quoteText = document.createElement('p');
-        quoteText.textContent = quote.text;
-        const quoteCategory = document.createElement('em');
-        quoteCategory.textContent = `– ${quote.category}`;
-
-        quoteDisplay.appendChild(quoteText);
+// Function
