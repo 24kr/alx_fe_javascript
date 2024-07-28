@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -42,8 +41,7 @@
             margin: 20px;
         }
 
-        #newQuoteText,
-        #newQuoteCategory {
+        #newQuoteText, #newQuoteCategory {
             width: 100%;
             padding: 10px;
             border: 1px solid #ddd;
@@ -51,8 +49,7 @@
             outline: none;
         }
 
-        #newQuoteText:focus,
-        #newQuoteCategory:focus {
+        #newQuoteText:focus, #newQuoteCategory:focus {
             border-color: #4a90e2;
         }
 
@@ -81,20 +78,41 @@
         .file-input {
             margin-top: 20px;
         }
+
+        .filter-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .filter-container select {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .filter-container select:focus {
+            border-color: #4a90e2;
+        }
     </style>
 </head>
-
 <body>
     <h1>Dynamic Quote Generator</h1>
     <div id="quoteDisplay"></div>
     <button id="newQuote">Show New Quote</button>
     <div id="newQuoteForm"></div>
+    <div class="filter-container">
+        <select id="categoryFilter" onchange="filterQuotes()">
+            <option value="all">All Categories</option>
+            <!-- Categories will be dynamically populated here -->
+        </select>
+    </div>
     <div class="action-buttons">
         <button id="importButton">Import Quotes</button>
         <button id="exportButton">Export Quotes</button>
         <input type="file" id="importFile" accept=".json" class="file-input" />
     </div>
-    <script src="script.js"></script>
-</body>
-
-</html>
+    <script src="script.js">

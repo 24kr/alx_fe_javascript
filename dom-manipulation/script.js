@@ -1,4 +1,3 @@
-// Array of quote objects (initially empty)
 let quotes = [];
 
 // Function to display a random quote
@@ -23,17 +22,6 @@ function showRandomQuote() {
     sessionStorage.setItem('lastViewedQuote', JSON.stringify(quote));
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-    const lastViewedQuote = sessionStorage.getItem('lastViewedQuote');
-    if (lastViewedQuote) {
-        quotes.push(JSON.parse(lastViewedQuote));
-        showRandomQuote();
-    } else {
-        loadQuotes();
-    }
-});
-
-
 // Function to create the form for adding new quotes
 function createAddQuoteForm() {
     const formHTML = `
@@ -51,11 +39,13 @@ function addQuote() {
     const text = document.getElementById('newQuoteText').value;
     const category = document.getElementById('newQuoteCategory').value;
     if (text && category) {
-        quotes.push({ text, category });
+        const newQuote = { text, category };
+        quotes.push(newQuote);
         document.getElementById('newQuoteText').value = '';
         document.getElementById('newQuoteCategory').value = '';
         saveQuotes();
         showRandomQuote(); // Display the new quote immediately
+        updateCategoryFilter();
     } else {
         alert('Please fill in both the quote and category.');
     }
@@ -64,16 +54,18 @@ function addQuote() {
 // Function to save quotes to local storage
 function saveQuotes() {
     localStorage.setItem('quotes', JSON.stringify(quotes));
+    updateCategoryFilter();  // Update category dropdown when saving quotes
 }
 
+// Function to load quotes from local storage
 function loadQuotes() {
     const storedQuotes = localStorage.getItem('quotes');
     if (storedQuotes) {
         quotes = JSON.parse(storedQuotes);
     }
     showRandomQuote();
+    updateCategoryFilter();
 }
-
 
 // Function to import quotes from a JSON string
 function importQuotes(jsonString) {
@@ -84,6 +76,7 @@ function importQuotes(jsonString) {
             saveQuotes();
             showRandomQuote();
             alert('Quotes imported successfully!');
+            updateCategoryFilter();
         } else {
             alert('Invalid JSON format. Please provide a valid JSON array.');
         }
@@ -107,35 +100,6 @@ function exportQuotes() {
 }
 
 // Function to handle file import
-function exportQuotes() {
-    const jsonString = JSON.stringify(quotes, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'quotes.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
-
-function importQuotes(jsonString) {
-    try {
-        const importedQuotes = JSON.parse(jsonString);
-        if (Array.isArray(importedQuotes)) {
-            quotes.push(...importedQuotes);
-            saveQuotes();
-            showRandomQuote();
-            alert('Quotes imported successfully!');
-        } else {
-            alert('Invalid JSON format. Please provide a valid JSON array.');
-        }
-    } catch (error) {
-        alert('Failed to import quotes. Please check the JSON format.');
-    }
-}
-
 function importFromJsonFile(event) {
     const fileReader = new FileReader();
     fileReader.onload = function (event) {
@@ -144,35 +108,71 @@ function importFromJsonFile(event) {
         saveQuotes();
         showRandomQuote();
         alert('Quotes imported successfully!');
+        updateCategoryFilter();
     };
     fileReader.readAsText(event.target.files[0]);
 }
 
-document.getElementById('importButton').addEventListener('click', () => {
-    const jsonString = prompt('Enter JSON string to import quotes:');
-    importQuotes(jsonString);
+// Function to filter quotes based on the selected category
+function filterQuotes() {
+    const selectedCategory = document.getElementById('categoryFilter').value;
+    let filteredQuotes = quotes;
+
+    if (selectedCategory !== 'all') {
+        filteredQuotes = quotes.filter(quote => quote.category === selectedCategory);
+    }
+
+    displayQuotes(filteredQuotes);
+}
+
+// Function to display quotes
+function displayQuotes(filteredQuotes) {
+    const quoteDisplay = document.getElementById('quoteDisplay');
+    quoteDisplay.innerHTML = '';
+
+    filteredQuotes.forEach(quote => {
+        const quoteText = document.createElement('p');
+        quoteText.textContent = quote.text;
+        const quoteCategory = document.createElement('em');
+        quoteCategory.textContent = `– ${quote.category}`;
+
+        quoteDisplay.appendChild(quoteText);
+        quoteDisplay.appendChild(quoteCategory);
+    });
+}
+
+// Function to update category filter dropdown
+function updateCategoryFilter() {
+    const categories = [...new Set(quotes.map(quote => quote.category))];
+    const categoryFilter = document.getElementById('categoryFilter');
+    categoryFilter.innerHTML = '<option value="all">All Categories</option>';
+
+    categories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category;
+        categoryFilter.appendChild(option);
+    });
+
+    const lastSelectedCategory = sessionStorage.getItem('lastSelectedCategory');
+    if (lastSelectedCategory) {
+        categoryFilter.value = lastSelectedCategory;
+    }
+
+    filterQuotes();
+}
+
+// Function to handle category filter change
+document.getElementById('categoryFilter').addEventListener('change', function () {
+    sessionStorage.setItem('lastSelectedCategory', this.value);
+    filterQuotes();
 });
-
-document.getElementById('exportButton').addEventListener('click', exportQuotes);
-document.getElementById('importFile').addEventListener('change', importFromJsonFile);
-
 
 // Initial setup
 loadQuotes();
 createAddQuoteForm();
+updateCategoryFilter();
 
 // Event listener for the button to show a new random quote
 const newQuoteButton = document.getElementById('newQuote');
 newQuoteButton.addEventListener('click', showRandomQuote);
-
-// Event listener for the import button
-document.getElementById('importButton').addEventListener('click', () => {
-    const jsonString = prompt('Enter JSON string to import quotes:');
-    importQuotes(jsonString);
-});
-
-// Event listener for the export button
-document.getElementById('exportButton').addEventListener('click', exportQuotes);
-
-// Event listener for file input to import quotes from JSON file
-document.getElementById('importFile').addEventListener('change', importFromJsonFile);
