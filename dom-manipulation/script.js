@@ -104,7 +104,7 @@ async function addQuote() {
 // Function to save quotes to local storage and sync with server
 async function saveQuotes() {
     localStorage.setItem('quotes', JSON.stringify(quotes));
-    await syncWithServer();
+    await syncQuotes();
     populateCategories();
 }
 
@@ -221,7 +221,7 @@ function populateCategories() {
 }
 
 // Function to sync quotes with the server
-async function syncWithServer() {
+async function syncQuotes() {
     try {
         const serverQuotes = await fetchQuotesFromServer();
         const localQuotes = getLocalQuotes();
@@ -240,7 +240,7 @@ async function syncWithServer() {
 
 // Function to periodically sync data
 function startPeriodicSync(interval = 30000) {
-    setInterval(syncWithServer, interval);
+    setInterval(syncQuotes, interval);
 }
 
 // Function to resolve conflicts by prioritizing server data
@@ -268,33 +268,4 @@ function notifyConflictResolution() {
 }
 
 // Function to handle data conflicts
-async function handleConflicts() {
-    const localQuotes = getLocalQuotes();
-    const serverQuotes = await fetchQuotesFromServer();
-    const resolvedQuotes = resolveConflicts(localQuotes, serverQuotes);
-    quotes = resolvedQuotes;
-    saveQuotes();
-    notifyConflictResolution();
-}
-
-// Initialize the application
-document.addEventListener('DOMContentLoaded', async () => {
-    createAddQuoteForm();
-    await loadQuotes();
-    const lastViewedQuote = sessionStorage.getItem('lastViewedQuote');
-    if (lastViewedQuote) {
-        const quote = JSON.parse(lastViewedQuote);
-        const quoteDisplay = document.getElementById('quoteDisplay');
-        quoteDisplay.innerHTML = `<p>${quote.text}</p><em>– ${quote.category}</em>`;
-    }
-    startPeriodicSync();
-});
-
-// Add event listeners for buttons
-document.getElementById('importButton').addEventListener('click', () => {
-    document.getElementById('importFile').click();
-});
-
-document.getElementById('importFile').addEventListener('change', importFromJsonFile);
-
-document.getElementById('exportButton').addEventListener('click', exportQuotes);
+async function h
