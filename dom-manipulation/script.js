@@ -84,7 +84,7 @@ function createAddQuoteForm() {
 }
 
 // Function to add a new quote
-function addQuote() {
+async function addQuote() {
     const text = document.getElementById('newQuoteText').value;
     const category = document.getElementById('newQuoteCategory').value;
     if (text && category) {
@@ -92,6 +92,7 @@ function addQuote() {
         quotes.push(newQuote);
         document.getElementById('newQuoteText').value = '';
         document.getElementById('newQuoteCategory').value = '';
+        await postQuoteToServer(newQuote);
         saveQuotes();
         showRandomQuote();
         populateCategories();
@@ -101,10 +102,10 @@ function addQuote() {
 }
 
 // Function to save quotes to local storage and sync with server
-function saveQuotes() {
+async function saveQuotes() {
     localStorage.setItem('quotes', JSON.stringify(quotes));
+    await syncWithServer();
     populateCategories();
-    syncWithServer();
 }
 
 // Function to load quotes from local storage and sync with the server
@@ -124,6 +125,12 @@ async function loadQuotes() {
     } catch (error) {
         console.error('Failed to load quotes:', error);
     }
+}
+
+// Function to get local quotes from storage
+function getLocalQuotes() {
+    const quotesData = localStorage.getItem('quotes');
+    return quotesData ? JSON.parse(quotesData) : [];
 }
 
 // Function to import quotes from a JSON string
@@ -184,4 +191,110 @@ function filterQuotes() {
     displayQuotes(filteredQuotes);
 }
 
-// Function
+// Function to display filtered quotes
+function displayQuotes(filteredQuotes) {
+    const quoteDisplay = document.getElementById('quoteDisplay');
+    quoteDisplay.innerHTML = '';
+
+    filteredQuotes.forEach(quote => {
+        const quoteText = document.createElement('p');
+        quoteText.textContent = quote.text;
+        const quoteCategory = document.createElement('em');
+        quoteCategory.textContent = `– ${quote.category}`;
+
+        quoteDisplay.appendChild(quoteText);
+        quoteDisplay.appendChild(quoteCategory);
+    });
+}
+
+// Function to populate category filter dropdown
+function populateCategories() {
+    const categoryFilter = document.getElementById('categoryFilter');
+    categoryFilter.innerHTML = '<option value="all">All Categories</option>';
+    const categories = [...new Set(quotes.map(quote => quote.category))];
+    categories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category;
+        categoryFilter.appendChild(option);
+    });
+}
+
+// Function to sync quotes with the server
+async function syncWithServer() {
+    try {
+        const serverQuotes = await fetchQuotesFromServer();
+        const localQuotes = getLocalQuotes();
+
+        const allQuotes = [...localQuotes, ...serverQuotes];
+        const uniqueQuotes = Array.from(new Set(allQuotes.map(quote => JSON.stringify(quote))))
+            .map(str => JSON.parse(str));
+
+        quotes = uniqueQuotes;
+        localStorage.setItem('quotes', JSON.stringify(quotes));
+        console.log('Data synced successfully');
+    } catch (error) {
+        console.error('Sync failed:', error);
+    }
+}
+
+// Function to periodically sync data
+function startPeriodicSync(interval = 30000) {
+    setInterval(syncWithServer, interval);
+}
+
+// Function to resolve conflicts by prioritizing server data
+function resolveConflicts(localQuotes, serverQuotes) {
+    const mergedQuotes = [...localQuotes];
+
+    serverQuotes.forEach(serverQuote => {
+        const localQuoteIndex = mergedQuotes.findIndex(localQuote =>
+            localQuote.text === serverQuote.text && localQuote.category === serverQuote.category
+        );
+
+        if (localQuoteIndex !== -1) {
+            mergedQuotes[localQuoteIndex] = serverQuote;
+        } else {
+            mergedQuotes.push(serverQuote);
+        }
+    });
+
+    return mergedQuotes;
+}
+
+// Function to notify users about conflicts
+function notifyConflictResolution() {
+    alert('Conflicts have been resolved. Please review the data.');
+}
+
+// Function to handle data conflicts
+async function handleConflicts() {
+    const localQuotes = getLocalQuotes();
+    const serverQuotes = await fetchQuotesFromServer();
+    const resolvedQuotes = resolveConflicts(localQuotes, serverQuotes);
+    quotes = resolvedQuotes;
+    saveQuotes();
+    notifyConflictResolution();
+}
+
+// Initialize the application
+document.addEventListener('DOMContentLoaded', async () => {
+    createAddQuoteForm();
+    await loadQuotes();
+    const lastViewedQuote = sessionStorage.getItem('lastViewedQuote');
+    if (lastViewedQuote) {
+        const quote = JSON.parse(lastViewedQuote);
+        const quoteDisplay = document.getElementById('quoteDisplay');
+        quoteDisplay.innerHTML = `<p>${quote.text}</p><em>– ${quote.category}</em>`;
+    }
+    startPeriodicSync();
+});
+
+// Add event listeners for buttons
+document.getElementById('importButton').addEventListener('click', () => {
+    document.getElementById('importFile').click();
+});
+
+document.getElementById('importFile').addEventListener('change', importFromJsonFile);
+
+document.getElementById('exportButton').addEventListener('click', exportQuotes);
